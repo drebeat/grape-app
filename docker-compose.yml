@@ -1,0 +1,40 @@
+services:
+  web:
+    build: .
+    container_name: forum_web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgres://postgres:password@db:5432/forum_db
+      REDIS_URL: redis://redis:6379/0
+
+  db:
+    image: postgres:15
+    container_name: forum_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: forum_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: forum_redis
+
+  sidekiq:
+    build: .
+    container_name: forum_worker
+    command: bundle exec sidekiq
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgres://postgres:password@db:5432/forum_db
+      REDIS_URL: redis://redis:6379/0
+
+volumes:
+  db_data:
